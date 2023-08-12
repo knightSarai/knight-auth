@@ -87,16 +87,11 @@ class APISettings:
 knight_auth_settings = APISettings(USER_SETTINGS, DEFAULTS, IMPORT_STRINGS)
 
 
-class KnightAuthSettings:
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
-
-
 def reload_api_settings(*args, **kwargs):
     global knight_auth_settings
     setting, value = kwargs['setting'], kwargs['value']
     if setting == 'KNIGHT_AUTH':
-        knight_auth_settings = KnightAuthSettings(**value)
+        knight_auth_settings = APISettings(**value)
         if len(knight_auth_settings.TOKEN_PREFIX) > CONSTANTS.MAXIMUM_TOKEN_PREFIX_LENGTH:
             raise ValueError("Illegal TOKEN_PREFIX length")
 
