@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="knight-auth",
-    version="0.2.3",
+    version="0.1.0",
     description='Authentication for django-ninja, KNOX inspired',
     url='https://github.com/knightSarai/knight-auth',
     author='knightSarai',
