@@ -10,7 +10,7 @@ api.add_router('auth/', auth_router)
 
 @api.get('/test')
 def test(request):
-    return {'message': 'Hello, world!', 'user': request.user.username}
+    return {'message': 'Hello, world!', 'user': request.auth.username}
 
 
 urlpatterns = [
