@@ -22,11 +22,11 @@ INSTALLED_APPS = [
 ```python
 from ninja import NinjaAPI
 from knightauth.auth import TokenAuthentication
-from knightauth.api import auth_router
+from knightauth.api import token_auth_router
 
 
 api = NinjaAPI(auth=TokenAuthentication())
-api.add_router('auth/', auth_router)
+api.add_router('auth/', token_auth_router)
 
 urlpatterns = [
     ....

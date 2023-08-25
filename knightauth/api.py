@@ -1,18 +1,22 @@
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login as django_login, logout as django_logout, get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.validators import EmailValidator
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.utils import timezone
+from django.core.exceptions import ValidationError
+from django.views.decorators.csrf import ensure_csrf_cookie
 from ninja import Router
-from ninja.responses import codes_4xx, codes_2xx
+from ninja.responses import Response
 
 from knightauth.models import get_token_model
-from knightauth.schemas import LoginIn, LoginErrorOut, LoginSuccessOut
+from knightauth.schemas import LoginIn, LoginErrorOut, LoginSuccessOut, UserRegisterSchema
 from knightauth.settings import knight_auth_settings
 
-auth_router = Router()
+token_auth_router = Router()
 
 
-@auth_router.post("/login", auth=None, response={codes_2xx: LoginSuccessOut, codes_4xx: LoginErrorOut})
-def login(request, payload: LoginIn):
+@token_auth_router.post("/login", auth=None, response={200: LoginSuccessOut, frozenset({401, 403}): LoginErrorOut})
+def token_login(request, payload: LoginIn):
     if knight_auth_settings.TOKEN_LIMIT_PER_USER is not None:
         now = timezone.now()
         token_count = (
@@ -49,16 +53,90 @@ def login(request, payload: LoginIn):
     }
 
 
-@auth_router.post("/logout", response={codes_2xx: None})
-def logout(request):
+@token_auth_router.post("/logout", response={204: None})
+def token_logout(request):
     request._auth.delete()
     user_logged_out.send(sender=request.user.__class__, request=request, user=request.user)
 
     return 204, None
 
 
-@auth_router.post("/logoutall", response={codes_2xx: None})
-def logout(request):
+@token_auth_router.post("/logoutall", response={204: None})
+def token_logout_all(request):
     request.user.auth_token_set.all().delete()
     user_logged_out.send(sender=request.user.__class__, request=request, user=request.user)
     return 204, None
+
+
+cookie_auth_router = Router()
+
+
+@cookie_auth_router.post("/login", auth=None, response={200: None, 400: LoginErrorOut})
+def cookie_login(request, payload: LoginIn):
+    username = payload.username
+    password = payload.password
+
+    if username is None or password is None:
+        return 400, {"message": "Please provide username and password."}
+
+    user = authenticate(username=username, password=password)
+
+    if user is None:
+        return 400, {"message": "Invalid credentials."}
+
+    django_login(request, user)
+
+    return 200, None
+
+
+@cookie_auth_router.post("/logout", response={200: None})
+def cookie_logout(request):
+    django_logout(request)
+
+    return 200, None
+
+
+@cookie_auth_router.get("/verify-session", auth=None)
+@ensure_csrf_cookie
+def verify_session(request):
+    if not request.user.is_authenticated:
+        return Response({"ok": None}, status=200)
+    return Response({"ok": request.user.username}, status=200)
+
+
+register_router = Router()
+
+
+@register_router.post("/register", auth=None, response={201: None, 400: LoginErrorOut})
+def register(request, user_payload: UserRegisterSchema):
+    try:
+        validate_password(user_payload.password)
+    except ValidationError as e:
+        return 400, {"message": e.messages}
+
+    if user_payload.password != user_payload.password_confirm:
+        return 400, {"message": "Password does not match"}
+
+    email_validator = EmailValidator()
+    try:
+        email_validator(user_payload.email)
+    except ValidationError as e:
+        return 400, {"message": e.messages}
+
+    User = get_user_model()
+
+    email_exist = User.objects.filter(email=user_payload.email).exists()
+    if email_exist:
+        return 400, {"message": "Email already exist"}
+
+    username_exist = User.objects.filter(username=user_payload.username).exists()
+    if username_exist:
+        return 400, {"message": "Username already exist"}
+
+    User.objects.create_user(
+        username=user_payload.username,
+        email=user_payload.email,
+        password=user_payload.password
+    )
+
+    return 201, None
