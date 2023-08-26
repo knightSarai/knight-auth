@@ -1,9 +1,14 @@
 from setuptools import setup, find_packages
 
+with open("README.md", "r") as f:
+    long_description = f.read()
+
 setup(
     name="knight-auth",
-    version="0.1.0",
+    version="0.2.0",
     description='Authentication for django-ninja, KNOX inspired',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/knightSarai/knight-auth',
     author='knightSarai',
     author_email='knight.sarai.dev@gmail.com',
