@@ -9,7 +9,7 @@ class LoginIn(Schema):
     password: str
 
 
-class LoginErrorOut(Schema):
+class ErrorOut(Schema):
     message: Union[str, list]
 
 

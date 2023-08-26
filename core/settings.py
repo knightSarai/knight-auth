@@ -31,9 +31,10 @@ if DEBUG:
 
 CSRF_COOKIE_SAMESITE = 'Lax'  # if same domain set to Strict
 SESSION_COOKIE_SAMESITE = 'Lax'  # if same domain set to Strict
-CSRF_COOKIE_HTTPONLY = False  # if false you need to manage csrf
+CSRF_COOKIE_HTTPONLY = False  # if true you need to manage csrf
 SESSION_COOKIE_HTTPONLY = True
-CSRF_TRUSTED_ORIGINS = ['http://localhost:4200']
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS = ['http://localhost:4200']
 
 # No need for this if same domain
 CORS_ALLOWED_ORIGINS = [

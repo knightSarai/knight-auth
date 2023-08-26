@@ -9,13 +9,18 @@ from ninja import Router
 from ninja.responses import Response
 
 from knightauth.models import get_token_model
-from knightauth.schemas import LoginIn, LoginErrorOut, LoginSuccessOut, UserRegisterSchema
+from knightauth.schemas import LoginIn, ErrorOut, LoginSuccessOut, UserRegisterSchema
 from knightauth.settings import knight_auth_settings
 
 token_auth_router = Router()
 
 
-@token_auth_router.post("/login", auth=None, response={200: LoginSuccessOut, frozenset({401, 403}): LoginErrorOut})
+@token_auth_router.post(
+    "login",
+    auth=None,
+    response={200: LoginSuccessOut, frozenset({401, 403}): ErrorOut},
+    url_name="login"
+)
 def token_login(request, payload: LoginIn):
     if knight_auth_settings.TOKEN_LIMIT_PER_USER is not None:
         now = timezone.now()
@@ -53,26 +58,42 @@ def token_login(request, payload: LoginIn):
     }
 
 
-@token_auth_router.post("/logout", response={204: None})
+@token_auth_router.post("logout", response={204: None, 400: ErrorOut}, url_name="logout")
 def token_logout(request):
+    if not hasattr(request, "_auth") or not request._auth:
+        return 400, {
+            "message": ""
+                       "Attempting to log out using an authentication method different from the one used for login."
+                       "Consider using session authentication instead"
+                       ""
+        }
+
     request._auth.delete()
     user_logged_out.send(sender=request.user.__class__, request=request, user=request.user)
 
     return 204, None
 
 
-@token_auth_router.post("/logoutall", response={204: None})
+@token_auth_router.post("logoutall", response={204: None, 400: ErrorOut}, url_name="logoutall")
 def token_logout_all(request):
-    request.user.auth_token_set.all().delete()
+    if not request.auth.auth_token_set.exists():
+        return 400, {
+            "message": ""
+                       "Attempting to log out using an authentication method different from the one used for login."
+                       "Consider using session authentication instead"
+                       ""
+        }
+
+    request.auth.auth_token_set.all().delete()
     user_logged_out.send(sender=request.user.__class__, request=request, user=request.user)
     return 204, None
 
 
-cookie_auth_router = Router()
+session_auth_router = Router()
 
 
-@cookie_auth_router.post("/login", auth=None, response={200: None, 400: LoginErrorOut})
-def cookie_login(request, payload: LoginIn):
+@session_auth_router.post("login", auth=None, response={200: None, 400: ErrorOut})
+def session_login(request, payload: LoginIn):
     username = payload.username
     password = payload.password
 
@@ -89,14 +110,14 @@ def cookie_login(request, payload: LoginIn):
     return 200, None
 
 
-@cookie_auth_router.post("/logout", response={200: None})
-def cookie_logout(request):
+@session_auth_router.post("logout", response={200: None})
+def session_logout(request):
     django_logout(request)
 
     return 200, None
 
 
-@cookie_auth_router.get("/verify-session", auth=None)
+@session_auth_router.get("verify-session", auth=None)
 @ensure_csrf_cookie
 def verify_session(request):
     if not request.user.is_authenticated:
@@ -107,7 +128,7 @@ def verify_session(request):
 register_router = Router()
 
 
-@register_router.post("/register", auth=None, response={201: None, 400: LoginErrorOut})
+@register_router.post("register", auth=None, response={201: None, 400: ErrorOut})
 def register(request, user_payload: UserRegisterSchema):
     try:
         validate_password(user_payload.password)

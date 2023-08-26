@@ -13,8 +13,8 @@ from knightauth.signals import token_expired
 class TokenAuthentication(APIKeyHeader):
     param_name = "Authorization"
 
-    def authenticate(self, request, key):
-        user, auth_token = self.authenticate_credentials(key)
+    def authenticate(self, request, token):
+        user, auth_token = self.authenticate_credentials(token)
         request._auth = auth_token
 
         return user
@@ -59,7 +59,7 @@ class TokenAuthentication(APIKeyHeader):
         if not auth_token.user.is_active:
             return None, None
 
-        return (auth_token.user, auth_token)
+        return auth_token.user, auth_token
 
     def _cleanup_token(self, auth_token):
         for other_token in auth_token.user.auth_token_set.all():

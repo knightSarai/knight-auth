@@ -22,6 +22,6 @@ setup(
         'django-ninja>=0.22.2'
     ],
     extras_require={
-        "dev": ["twine>=4.0.2"],
+        "dev": ["twine>=4.0.2", "pytest-django>=4.5.2"],
     }
 )
