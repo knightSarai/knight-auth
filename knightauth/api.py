@@ -19,7 +19,7 @@ token_auth_router = Router()
     "login",
     auth=None,
     response={200: LoginSuccessOut, frozenset({401, 403}): ErrorOut},
-    url_name="login"
+    url_name="token_login"
 )
 def token_login(request, payload: LoginIn):
     if knight_auth_settings.TOKEN_LIMIT_PER_USER is not None:
@@ -58,7 +58,7 @@ def token_login(request, payload: LoginIn):
     }
 
 
-@token_auth_router.post("logout", response={204: None, 400: ErrorOut}, url_name="logout")
+@token_auth_router.post("logout", response={204: None, 400: ErrorOut}, url_name="token_logout")
 def token_logout(request):
     if not hasattr(request, "_auth") or not request._auth:
         return 400, {
@@ -74,7 +74,7 @@ def token_logout(request):
     return 204, None
 
 
-@token_auth_router.post("logoutall", response={204: None, 400: ErrorOut}, url_name="logoutall")
+@token_auth_router.post("logoutall", response={204: None, 400: ErrorOut}, url_name="token_logoutall")
 def token_logout_all(request):
     if not request.auth.auth_token_set.exists():
         return 400, {
@@ -92,7 +92,7 @@ def token_logout_all(request):
 session_auth_router = Router()
 
 
-@session_auth_router.post("login", auth=None, response={200: None, 400: ErrorOut})
+@session_auth_router.post("login", auth=None, response={200: None, 400: ErrorOut}, url_name="session_login")
 def session_login(request, payload: LoginIn):
     username = payload.username
     password = payload.password
@@ -110,14 +110,14 @@ def session_login(request, payload: LoginIn):
     return 200, None
 
 
-@session_auth_router.post("logout", response={200: None})
+@session_auth_router.post("logout", response={200: None}, url_name="session_logout")
 def session_logout(request):
     django_logout(request)
 
     return 200, None
 
 
-@session_auth_router.get("verify-session", auth=None)
+@session_auth_router.get("verify-session", auth=None, url_name="verify_session")
 @ensure_csrf_cookie
 def verify_session(request):
     if not request.user.is_authenticated:
@@ -128,7 +128,7 @@ def verify_session(request):
 register_router = Router()
 
 
-@register_router.post("register", auth=None, response={201: None, 400: ErrorOut})
+@register_router.post("register", auth=None, response={201: None, 400: ErrorOut}, url_name="register_user")
 def register(request, user_payload: UserRegisterSchema):
     try:
         validate_password(user_payload.password)

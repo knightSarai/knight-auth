@@ -1,17 +1,15 @@
 from django.contrib import admin
 from django.urls import path
 from ninja import NinjaAPI
-from ninja.security import SessionAuth
+from ninja.security import django_auth
 
 from knightauth.api import token_auth_router, register_router, session_auth_router
 from knightauth.auth import TokenAuthentication
 
 api = NinjaAPI(
     title='KnightAuth',
-    auth=[TokenAuthentication(), SessionAuth()],
+    auth=[TokenAuthentication(), django_auth],
     csrf=True,
-    version='1.0.0',
-    urls_namespace='token'
 )
 api.add_router('auth/', token_auth_router)
 api.add_router('auth/session/', session_auth_router)

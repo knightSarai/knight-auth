@@ -4,8 +4,8 @@ import pytest
 from django.test import RequestFactory
 from django.urls import reverse_lazy
 
-from knightauth.models import AuthToken, AuthTokenManager
 from knightauth.auth import TokenAuthentication
+from knightauth.models import AuthToken
 from knightauth.signals import token_expired
 
 
@@ -23,7 +23,7 @@ def test_initial_auth_token_to_be_zero(setup_user):
 @pytest.mark.django_db
 def test_login_creates_auth_token(setup_user, django_user_model, client):
     request_kwargs = {
-        'path': reverse_lazy('token:login'),
+        'path': reverse_lazy('api-1.0.0:token_login'),
         'data': {
             django_user_model.USERNAME_FIELD: "john.doe",
             "password": "qwerty1200"
@@ -42,7 +42,7 @@ def test_login_creates_auth_token(setup_user, django_user_model, client):
 @pytest.mark.django_db
 def test_login_returns_serialized_token(setup_user, django_user_model, client):
     request_kwargs = {
-        'path': reverse_lazy('token:login'),
+        'path': reverse_lazy('api-1.0.0:token_login'),
         'data': {
             django_user_model.USERNAME_FIELD: "john.doe",
             "password": "qwerty1200"
@@ -60,7 +60,7 @@ def test_login_returns_serialized_token(setup_user, django_user_model, client):
 @pytest.mark.django_db
 def test_logout_deletes_keys(setup_user, django_user_model, client):
     request_kwargs = {
-        'path': reverse_lazy('token:login'),
+        'path': reverse_lazy('api-1.0.0:token_login'),
         'data': {
             django_user_model.USERNAME_FIELD: "john.doe",
             "password": "qwerty1200"
@@ -72,7 +72,7 @@ def test_logout_deletes_keys(setup_user, django_user_model, client):
     response = client.post(**request_kwargs).json()
 
     request_kwargs = {
-        'path': reverse_lazy('token:logout'),
+        'path': reverse_lazy('api-1.0.0:token_logout'),
         'content_type': 'application/json',
         'HTTP_AUTHORIZATION': response.get('token')
     }
@@ -85,7 +85,7 @@ def test_logout_deletes_keys(setup_user, django_user_model, client):
 @pytest.mark.django_db
 def test_logout_all_deletes_keys(setup_user, django_user_model, client):
     request_kwargs = {
-        'path': reverse_lazy('token:login'),
+        'path': reverse_lazy('api-1.0.0:token_login'),
         'data': {
             django_user_model.USERNAME_FIELD: "john.doe",
             "password": "qwerty1200"
@@ -97,7 +97,7 @@ def test_logout_all_deletes_keys(setup_user, django_user_model, client):
     response = client.post(**request_kwargs).json()
 
     request_kwargs = {
-        'path': reverse_lazy('token:logoutall'),
+        'path': reverse_lazy('api-1.0.0:token_logoutall'),
         'content_type': 'application/json',
         'HTTP_AUTHORIZATION': response.get('token'),
     }
@@ -110,7 +110,7 @@ def test_logout_all_deletes_keys(setup_user, django_user_model, client):
 @pytest.mark.django_db
 def test_logout_all_deletes_keys_for_user(setup_user, django_user_model, client):
     request_kwargs = {
-        'path': reverse_lazy('token:login'),
+        'path': reverse_lazy('api-1.0.0:token_login'),
         'data': {
             django_user_model.USERNAME_FIELD: "john.doe",
             "password": "qwerty1200"
@@ -124,7 +124,7 @@ def test_logout_all_deletes_keys_for_user(setup_user, django_user_model, client)
     response = client.post(**request_kwargs).json()
 
     request_kwargs = {
-        'path': reverse_lazy('token:logoutall'),
+        'path': reverse_lazy('api-1.0.0:token_logoutall'),
         'content_type': 'application/json',
         'HTTP_AUTHORIZATION': response.get('token'),
     }
@@ -139,7 +139,7 @@ def test_expired_tokens_login_fails(setup_user, django_user_model, client):
     _, token = AuthToken.objects.create(user=django_user_model.objects.first(), expiry=timedelta(seconds=0))
 
     request_kwargs = {
-        'path': reverse_lazy('token:test'),
+        'path': reverse_lazy('api-1.0.0:test'),
         'content_type': 'application/json',
         'HTTP_AUTHORIZATION': token
     }
@@ -181,7 +181,7 @@ def test_expiry_signals(setup_user, django_user_model, client):
     _, token = AuthToken.objects.create(user=django_user_model.objects.first(), expiry=timedelta(seconds=0))
 
     request_kwargs = {
-        'path': reverse_lazy('token:test'),
+        'path': reverse_lazy('api-1.0.0:test'),
         'content_type': 'application/json',
         'HTTP_AUTHORIZATION': token
     }
