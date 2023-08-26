@@ -73,8 +73,8 @@ api.add_router('auth/session/', session_auth_router)
 **NOTE: As for now, you still need to manage CSRF if you want combine token authentication and session authentication.
 Even though token authentication does not require CSRF, This issue should be fixed in Django Ninja 1.0**
 
-A workaround for this issue is to add a custom middleware to your project. The middleware should check if the request is authenticated with token authentication.
-If the request is authenticated with token authentication, the middleware should set the CSRF cookie. Otherwise, the middleware should not set the CSRF cookie.
+A workaround for this issue is to add a custom middleware to your project. The middleware should check if the request is authenticated with session authentication.
+If the request is authenticated with token authentication, the middleware should exempt CSRF checks. Here is an example of such a middleware:
 ```python
 from ninja.operation import PathView
 class ExemptAPIKeyAuthFromCSRFMiddleware:
@@ -98,8 +98,51 @@ class ExemptAPIKeyAuthFromCSRFMiddleware:
         if isinstance(klass, PathView):
             request._dont_enforce_csrf_checks = True
 ```
+### Session Authentication settings
+If Your frontend and backend on the same domain, You can set the following settings for session authentication:
+```python
+CSRF_COOKIE_SAMESITE = 'Strict'
+SESSION_COOKIE_SAMESITE = 'Strict'
+CSRF_COOKIE_HTTPONLY = False 
+SESSION_COOKIE_HTTPONLY = True
+```
+If your frontend and backend on different domains (Cross-Origin), You can set the following settings for session authentication:
+```python
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_HTTPONLY = True
+CSRF_TRUSTED_ORIGINS = []
+CORS_ALLOWED_ORIGINS = []
+CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
 
-## Register endpoint
+CORS_ALLOW_CREDENTIALS = True
+
+INSTALLED_APPS = [
+    '...',
+    'corsheaders'
+]
+
+MIDDLEWARE = [
+    '...',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware'
+]
+```
+Don't forget to add te following settings in Production:
+```python
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+```
+If you want to set `CSRF_COOKIE_HTTPONLY = True`, You have to manage CSRF manually in your frontend. You might need and endpoint like this:
+```python
+from django.middleware.csrf import get_token
+@api.get('/csrf')
+def csrf(request):
+    return {'csrf': get_token(request)}
+```
+But I recommend serving your frontend from the same domain as your backend. It's more secure and easier to manage.
+## The Register Endpoint
 Knight Auth provides a register endpoint for creating new users. You can add the register endpoint to your project by adding the following code to your NinjaAPI instance.
 ```python
 from ninja import NinjaAPI
