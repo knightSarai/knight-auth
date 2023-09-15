@@ -20,7 +20,7 @@ pip install knight-auth
 ```python
 INSTALLED_APPS = [
     ...
-    'knight_auth',
+    'knightauth',
     ...
 ]
 ```
