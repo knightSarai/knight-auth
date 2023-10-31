@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setup(
     name="knight-auth",
-    version="0.2.0",
+    version="0.2.1",
     description='Authentication for django-ninja, KNOX inspired',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -21,7 +21,7 @@ setup(
         'Intended Audience :: Developers',
     ],
     packages=find_packages(exclude=['core']),
-    python_requires='>=3.11.4',
+    python_requires='>=3.11.0',
     install_requires=[
         'django>=4.2.4',
         'django-ninja>=0.22.2'
