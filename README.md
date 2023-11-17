@@ -5,7 +5,6 @@ With an emphasis on flexibility, security, and seamless integration, Knight Auth
 
 Knight Auth has the following features:
 * Provides two methods of authentication: token authentication and session authentication. You can use either or both methods in your project.
-* CSRF support for session authentication.
 * Register endpoint for creating new users.
 
 # Setup
