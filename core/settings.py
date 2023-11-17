@@ -27,7 +27,7 @@ DEBUG = True
 ALLOWED_HOSTS = []  # No need for this if same domain
 
 if DEBUG:
-    ALLOWED_HOSTS = ['localhost']
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 CSRF_COOKIE_SAMESITE = 'Lax'  # if same domain set to Strict
 SESSION_COOKIE_SAMESITE = 'Lax'  # if same domain set to Strict
@@ -68,7 +68,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'core.middlewares.ExemptAPIKeyAuthFromCSRFMiddleware'
 ]
 
 ROOT_URLCONF = 'core.urls'

@@ -9,7 +9,6 @@ from knightauth.auth import TokenAuthentication
 api = NinjaAPI(
     title='KnightAuth',
     auth=[TokenAuthentication(), django_auth],
-    csrf=True,
 )
 api.add_router('auth/', token_auth_router)
 api.add_router('auth/session/', session_auth_router)

@@ -63,40 +63,9 @@ from knightauth.auth import TokenAuthentication
 api = NinjaAPI(
     title='KnightAuth',
     auth=[TokenAuthentication(), SessionAuth()],
-    csrf=True,
 )
 api.add_router('auth/', token_auth_router)
 api.add_router('auth/session/', session_auth_router)
-```
-*NOTE: You have to set csrf=True for session authentication to work.
-
-**NOTE: As for now, you still need to manage CSRF if you want combine token authentication and session authentication.
-Even though token authentication does not require CSRF, This issue should be fixed in Django Ninja 1.0**
-
-A workaround for this issue is to add a custom middleware to your project. The middleware should check if the request is authenticated with session authentication.
-If the request is authenticated with token authentication, the middleware should exempt CSRF checks. Here is an example of such a middleware:
-```python
-from ninja.operation import PathView
-class ExemptAPIKeyAuthFromCSRFMiddleware:
-    """
-    https://github.com/vitalik/django-ninja/issues/283
-    """
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        return self.get_response(request)
-
-    def process_view(self, request, view_func, view_args, view_kwargs):
-        if request.user.is_authenticated:
-            return
-
-        klass = getattr(view_func, "__self__", None)
-        if not klass:
-            return
-
-        if isinstance(klass, PathView):
-            request._dont_enforce_csrf_checks = True
 ```
 ### Session Authentication settings
 If Your frontend and backend on the same domain, You can set the following settings for session authentication:
